@@ -2,116 +2,158 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Smart IoT Traffic Dashboard</title>
+  <title>📡 IoT Traffic Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
     body {
-      background-color: #0f0f0f;
-      color: #f1f1f1;
-      font-family: sans-serif;
+      background-color: #0d0d0d;
+      color: #00ff99;
+      font-family: 'Share Tech Mono', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       padding: 20px;
     }
-    h1, h2 {
-      text-align: center;
+
+    h1 {
+      font-size: 2em;
+      margin-bottom: 10px;
+      animation: glow 1.5s ease-in-out infinite alternate;
     }
-    canvas {
-      margin: 20px auto;
-      display: block;
-      background-color: #1c1c1c;
-      border-radius: 12px;
+
+    #clock {
+      font-size: 1.2em;
+      margin-bottom: 20px;
     }
-    pre {
-      background: #1a1a1a;
+
+    #packets {
+      font-size: 1.5em;
+      margin: 10px 0;
+      color: #00ff99;
+    }
+
+    @keyframes glow {
+      from {
+        text-shadow: 0 0 5px #00ff99;
+      }
+      to {
+        text-shadow: 0 0 20px #00ff99;
+      }
+    }
+
+    .alert {
+      background-color: red;
+      color: white;
+      font-weight: bold;
       padding: 10px;
-      border-radius: 10px;
-      color: #0f0;
-      max-width: 800px;
-      margin: auto;
+      display: none;
+      animation: flash 1s ease-in-out 3;
+      margin-bottom: 20px;
+    }
+
+    @keyframes flash {
+      0%, 100% { background-color: #0d0d0d; }
+      50% { background-color: red; }
+    }
+
+    button {
+      background-color: #1a1a1a;
+      color: #00ff99;
+      border: 2px solid #00ff99;
+      padding: 10px 20px;
+      margin-top: 20px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+
+    canvas {
+      max-width: 600px;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
-  <h1>🚀 IoT Behavior Profiler</h1>
+  <h1>📡 IoT Traffic Dashboard</h1>
+  <div id="clock">🕒 Loading current time...</div>
+  <div id="packets">📦 Packets Captured: <span id="count">0</span></div>
+  <div class="alert" id="alertBox">🚨 Simulated attack triggered! Risk level HIGH.</div>
 
-  <h2>📊 Devices by Packet Count</h2>
-  <canvas id="deviceChart" width="800" height="400"></canvas>
-
-  <h2>🧪 Protocol Breakdown</h2>
-  <canvas id="protocolChart" width="800" height="400"></canvas>
-
-  <h2>🧠 AI-style Behavior Notes</h2>
-  <pre id="notes">Loading behavior notes...</pre>
+  <canvas id="iotChart"></canvas>
+  <button onclick="simulateAttack()">Simulate Attack</button>
 
   <script>
-    async function loadData(url) {
-      const res = await fetch(url);
-      return await res.json();
+    // Real-time Clock
+    function updateClock() {
+      const now = new Date();
+      document.getElementById("clock").textContent =
+        "🕒 " + now.toLocaleTimeString();
     }
+    setInterval(updateClock, 1000);
+    updateClock();
 
-    async function loadText(url) {
-      const res = await fetch(url);
-      return await res.text();
-    }
+    // Load JSON data
+    fetch("device_summary.json")
+      .then(response => response.json())
+      .then(data => {
+        const labels = Object.keys(data);
+        const values = Object.values(data);
+        animateCount(values.reduce((a, b) => a + b, 0));
 
-    async function renderCharts() {
-      const devices = await loadData('device_summary.json');
-      const protocols = await loadData('protocol_breakdown.json');
-      const notes = await loadText('behavior_notes.txt');
-      document.getElementById('notes').innerText = notes;
-
-      const deviceCtx = document.getElementById('deviceChart').getContext('2d');
-      new Chart(deviceCtx, {
-        type: 'bar',
-        data: {
-          labels: Object.keys(devices),
-          datasets: [{
-            label: 'Packets',
-            data: Object.values(devices),
-            backgroundColor: 'rgba(0, 255, 0, 0.6)',
-            borderColor: 'rgba(0, 255, 0, 1)',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { color: '#f1f1f1' }
-            },
-            x: {
-              ticks: { color: '#f1f1f1' }
-            }
+        new Chart(document.getElementById("iotChart"), {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [{
+              label: "IoT Devices",
+              data: values,
+              backgroundColor: "#00ff99"
+            }]
           },
-          plugins: {
-            legend: {
-              labels: { color: '#f1f1f1' }
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { color: "#00ff99" }
+              },
+              x: {
+                ticks: { color: "#00ff99" }
+              }
+            },
+            plugins: {
+              legend: {
+                labels: {
+                  color: '#00ff99'
+                }
+              }
             }
           }
-        }
+        });
       });
 
-      const protoCtx = document.getElementById('protocolChart').getContext('2d');
-      new Chart(protoCtx, {
-        type: 'pie',
-        data: {
-          labels: Object.keys(protocols),
-          datasets: [{
-            label: 'Protocol Usage',
-            data: Object.values(protocols),
-            backgroundColor: ['#00ff99', '#33ccff', '#ffcc00', '#ff3366', '#9966ff']
-          }]
-        },
-        options: {
-          plugins: {
-            legend: {
-              labels: { color: '#f1f1f1' }
-            }
-          }
+    // Animate packet count
+    function animateCount(target) {
+      let count = 0;
+      const step = Math.ceil(target / 100);
+      const interval = setInterval(() => {
+        count += step;
+        if (count >= target) {
+          count = target;
+          clearInterval(interval);
         }
-      });
+        document.getElementById("count").textContent = count;
+      }, 20);
     }
 
-    renderCharts();
+    // Simulate cyber attack alert
+    function simulateAttack() {
+      const alertBox = document.getElementById("alertBox");
+      alertBox.style.display = "block";
+      setTimeout(() => {
+        alertBox.style.display = "none";
+      }, 3000);
+    }
   </script>
 </body>
 </html>
