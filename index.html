@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IoT Traffic Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background-color: #0f0f0f;
+      color: #f0f0f0;
+      font-family: 'Courier New', monospace;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      margin-top: 1em;
+      color: #00ff99;
+      text-shadow: 0 0 10px #00ff99;
+    }
+    #dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      padding: 2rem;
+      width: 90%;
+      max-width: 1200px;
+    }
+    canvas {
+      background-color: #1a1a1a;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    #behavior {
+      background: #1a1a1a;
+      padding: 1.5rem;
+      border-radius: 10px;
+      color: #00ffcc;
+      box-shadow: 0 0 10px #00ffcc;
+      white-space: pre-wrap;
+    }
+    #themeToggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #111;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <button id="themeToggle">🌙 Toggle Theme</button>
+  <h1>📡 IoT Traffic Dashboard</h1>
+  <p style="color: lime">Packets Captured: <span id="packetCount">Loading...</span></p>
+  <div id="dashboard">
+    <canvas id="barChart"></canvas>
+    <canvas id="pieChart"></canvas>
+    <div id="behavior">Loading device behavior...</div>
+  </div>
+
+  <script>
+    const ctxBar = document.getElementById('barChart').getContext('2d');
+    const ctxPie = document.getElementById('pieChart').getContext('2d');
+
+    fetch('device_summary.json')
+      .then(res => res.json())
+      .then(data => {
+        const labels = Object.keys(data);
+        const values = Object.values(data);
+        document.getElementById("packetCount").innerText = values.reduce((a, b) => a + b, 0);
+
+        new Chart(ctxBar, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Packets per IoT Device',
+              data: values,
+              backgroundColor: '#00ff99'
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } }
+          }
+        });
+      });
+
+    fetch('protocol_breakdown.json')
+      .then(res => res.json())
+      .then(data => {
+        new Chart(ctxPie, {
+          type: 'pie',
+          data: {
+            labels: Object.keys(data),
+            datasets: [{
+              data: Object.values(data),
+              backgroundColor: ['#00ffcc', '#ffcc00', '#ff0066']
+            }]
+          }
+        });
+      });
+
+    fetch('behavior_notes.txt')
+      .then(res => res.text())
+      .then(text => {
+        document.getElementById("behavior").textContent = text;
+      });
+
+    // Theme toggle
+    const toggle = document.getElementById("themeToggle");
+    toggle.addEventListener("click", () => {
+      const body = document.body;
+      if (body.style.backgroundColor === 'white') {
+        body.style.backgroundColor = '#0f0f0f';
+        body.style.color = '#f0f0f0';
+      } else {
+        body.style.backgroundColor = 'white';
+        body.style.color = 'black';
+      }
+    });
+  </script>
+</body>
+</html>
+
